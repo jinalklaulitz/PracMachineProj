@@ -1,0 +1,96 @@
+---
+title: "Practical Machine Learning - Writeup"
+author: "Marvin S. Mananghaya"
+date: "Sunday, August 24, 2014"
+output: html_document
+---
+
+## Introduction
+  This document is write-up for the practical machine learning class, on how the author of this document was able to develop a machine learning model for class' project. The class was given a problem that involves determing the quality of a execution by a person during his/her weight lighting exercise. (see: http://groupware.les.inf.puc-rio.br/har). 
+
+  The class was provided two datasets, where one is used to train the model and the other as a test dataset to be used on the second part of the project. This document describes the training procedure involved in creating the model that would predict the results of the second part of the model. The model was constructed using Random Forest with a 60/40 split of the original training dataset with K-fold cross-validation, where k=10. The results show a 99.91% accuracy when used with the secondary test dataset and a 20/20 or 100% accuracy prediction when used with the primary test dataset.
+
+## Feature selection
+
+The following fields were removed if they meet any of the following conditions:
+* If the column contains a row with NAs.
+* If the column contains a row with blanks.
+* The columns 1,2 and 5.
+* If the `nearZeroVar()` has determined the column turns up as `TRUE`.
+
+For the first two conditions, this will make the dataset balanced as it no longer has to deal with missing values. The third removes column 1, the observation number, column 2, the name of the participant for the data collection, and column 3, the unformatted datetime when the data was collected. the The last condition makes sure that the remaining fields should have some variance as it's meaningless to model using something that isn't unique among the observations. 
+
+The result of leaves `r ncol(clean_train3)` columns from the both the training and testing set. A listing of the columns of the training is shown below:
+```{r echo=FALSE}
+colnames(clean_train3)
+```
+The only difference between the training and testing set is the 'classe' and 'Problem_id'. 
+
+## Cross-validation procedure
+To facilate the initial accuracy of the mode, the first step taken was that The training data set is further divided by 60/40, whereby 60 is the proportion of the primary training dataset now considered as the secondary training dataset and the remainder as part of the secondary testing set. This is so that prior to using the model to predict the primary testing set, one is able to assess the performance of the model.
+
+As practice To further improve accuracy without falling to overfitting, the K-fold cross validation was used on the secondary training dataset, where k=10. 
+
+## Results
+
+The results of the training of the secondary training set is shown as follows:
+```{r eval=FALSE}
+Random Forest 
+
+11776 samples
+   55 predictors
+    5 classes: 'A', 'B', 'C', 'D', 'E' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 1 times) 
+
+Summary of sample sizes: 10599, 10600, 10600, 10599, 10597, 10598, ... 
+
+Resampling results across tuning parameters:
+
+  mtry  Accuracy  Kappa  Accuracy SD  Kappa SD
+  2     0.995     0.994  0.00298      0.00377 
+  28    0.998     0.998  0.00114      0.00144 
+  55    0.996     0.995  0.00143      0.00181 
+
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 28.
+```
+
+
+The results of predicting the secondary testing set, using the model constructed using the secondary training set is shown as follows:
+
+```{r eval=FALSE}
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 2232    0    0    0    0
+         B    0 1518    6    0    0
+         C    0    0 1362    1    0
+         D    0    0    0 1285    0
+         E    0    0    0    0 1442
+
+Overall Statistics
+                                          
+               Accuracy : 0.9991          
+                 95% CI : (0.9982, 0.9996)
+    No Information Rate : 0.2845          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.9989          
+ Mcnemar's Test P-Value : NA              
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            1.0000   1.0000   0.9956   0.9992   1.0000
+Specificity            1.0000   0.9991   0.9998   1.0000   1.0000
+Pos Pred Value         1.0000   0.9961   0.9993   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   0.9991   0.9998   1.0000
+Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+Detection Rate         0.2845   0.1935   0.1736   0.1638   0.1838
+Detection Prevalence   0.2845   0.1942   0.1737   0.1638   0.1838
+Balanced Accuracy      1.0000   0.9995   0.9977   0.9996   1.0000'
+```
+Based on the results of the training show that the accuracy of the model using the training set is 99.8% based on the optimal mtry. However the accuracy of the fitting of the model to the secondary test dataset is 99.91%. Despite additional gain in accuracy, the model was expected to perform at most 99.8%., Therefore this means the model has an out of sample error rate of 0.11%.  
